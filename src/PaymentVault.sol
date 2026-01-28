@@ -3,9 +3,17 @@ pragma solidity ^0.8.19;
 
 contract PaymentVault {
     address public owner;
+    bool private locked;
 
     event Deposit(address indexed from, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
+
+    modifier noReentrant() {
+        require(!locked, "Reentrant call");
+        locked = true;
+        _;
+        locked = false;
+    }
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
@@ -28,7 +36,7 @@ contract PaymentVault {
     }
 
     // Withdraw ETH
-    function withdraw(uint256 amount) external onlyOwner {
+    function withdraw(uint256 amount) external onlyOwner noReentrant {
         require(amount <= address(this).balance, "Insufficient balance");
 
         (bool success, ) = payable(owner).call{value: amount}("");
