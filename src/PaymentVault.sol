@@ -4,11 +4,14 @@ pragma solidity ^0.8.19;
 contract PaymentVault {
     address public owner;
     bool private locked;
+    bool public paused;
     uint256 public constant MIN_DEPOSIT = 0.001 ether;
 
     event Deposit(address indexed from, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event Paused(address account);
+    event Unpaused(address account);
 
     modifier noReentrant() {
         require(!locked, "Reentrant call");
@@ -22,6 +25,11 @@ contract PaymentVault {
         _;
     }
 
+    modifier whenNotPaused() {
+        require(!paused, "Contract is paused");
+        _;
+    }
+
     constructor() {
         owner = msg.sender;
     }
@@ -32,13 +40,13 @@ contract PaymentVault {
     }
 
     // Deposit function (optional, clearer than receive)
-    function deposit() external payable {
+    function deposit() external payable whenNotPaused {
         require(msg.value >= MIN_DEPOSIT, "Below minimum deposit");
         emit Deposit(msg.sender, msg.value);
     }
 
     // Withdraw ETH
-    function withdraw(uint256 amount) external onlyOwner noReentrant {
+    function withdraw(uint256 amount) external onlyOwner noReentrant whenNotPaused {
         require(amount <= address(this).balance, "Insufficient balance");
 
         (bool success, ) = payable(owner).call{value: amount}("");
@@ -58,5 +66,17 @@ contract PaymentVault {
         address oldOwner = owner;
         owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
+    }
+
+    // Pause contract
+    function pause() external onlyOwner {
+        paused = true;
+        emit Paused(msg.sender);
+    }
+
+    // Unpause contract
+    function unpause() external onlyOwner {
+        paused = false;
+        emit Unpaused(msg.sender);
     }
 }
