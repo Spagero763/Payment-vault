@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 contract PaymentVault {
     address public owner;
     bool private locked;
+    uint256 public constant MIN_DEPOSIT = 0.001 ether;
 
     event Deposit(address indexed from, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
@@ -31,7 +32,7 @@ contract PaymentVault {
 
     // Deposit function (optional, clearer than receive)
     function deposit() external payable {
-        require(msg.value > 0, "Zero amount");
+        require(msg.value >= MIN_DEPOSIT, "Below minimum deposit");
         emit Deposit(msg.sender, msg.value);
     }
 
