@@ -8,6 +8,7 @@ contract PaymentVault {
 
     event Deposit(address indexed from, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     modifier noReentrant() {
         require(!locked, "Reentrant call");
@@ -49,5 +50,13 @@ contract PaymentVault {
     // Check balance
     function getBalance() external view returns (uint256) {
         return address(this).balance;
+    }
+
+    // Transfer ownership to new address
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "Invalid address");
+        address oldOwner = owner;
+        owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
     }
 }
