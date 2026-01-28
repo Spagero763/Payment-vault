@@ -6,6 +6,9 @@ contract PaymentVault {
     bool private locked;
     bool public paused;
     uint256 public constant MIN_DEPOSIT = 0.001 ether;
+    uint256 public totalDeposited;
+    
+    mapping(address => uint256) public deposits;
 
     event Deposit(address indexed from, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
@@ -36,12 +39,16 @@ contract PaymentVault {
 
     // Accept ETH
     receive() external payable {
+        deposits[msg.sender] += msg.value;
+        totalDeposited += msg.value;
         emit Deposit(msg.sender, msg.value);
     }
 
     // Deposit function (optional, clearer than receive)
     function deposit() external payable whenNotPaused {
         require(msg.value >= MIN_DEPOSIT, "Below minimum deposit");
+        deposits[msg.sender] += msg.value;
+        totalDeposited += msg.value;
         emit Deposit(msg.sender, msg.value);
     }
 
