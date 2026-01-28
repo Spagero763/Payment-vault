@@ -39,6 +39,7 @@ contract PaymentVault {
 
     // Accept ETH
     receive() external payable {
+        require(!paused, "Contract is paused");
         deposits[msg.sender] += msg.value;
         totalDeposited += msg.value;
         emit Deposit(msg.sender, msg.value);
@@ -60,6 +61,17 @@ contract PaymentVault {
         require(success, "Transfer failed");
 
         emit Withdraw(owner, amount);
+    }
+
+    // Withdraw all ETH from vault
+    function withdrawAll() external onlyOwner noReentrant whenNotPaused {
+        uint256 balance = address(this).balance;
+        require(balance > 0, "No funds to withdraw");
+
+        (bool success, ) = payable(owner).call{value: balance}("");
+        require(success, "Transfer failed");
+
+        emit Withdraw(owner, balance);
     }
 
     // Check balance
